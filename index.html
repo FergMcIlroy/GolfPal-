@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Ireland Golf Courses</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+
+<!-- React + ReactDOM (production builds) -->
+<script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+<!-- Babel Standalone: compiles the JSX in app.jsx right in the browser, no build step needed -->
+<script src="https://unpkg.com/@babel/standalone/babel.min.js" crossorigin></script>
+
+<style>
+  html, body { margin: 0; padding: 0; }
+  #root { min-height: 100vh; }
+</style>
+</head>
+<body>
+<div id="root">
+  <div style="display:flex;align-items:center;justify-content:center;min-height:100vh;font-family:sans-serif;color:#4C5A4D;">
+    Loading…
+  </div>
+</div>
+
+<script>
+  /**
+   * A drop-in replacement for Anthropic's artifact-only `window.storage` API,
+   * backed by the browser's localStorage. This keeps the app's data layer
+   * unchanged from the Claude artifact version.
+   *
+   * IMPORTANT LIMITATION: localStorage is per-browser, per-device. The
+   * `shared` flag is preserved as a namespace but is NOT actually shared
+   * between different visitors — everyone gets their own local copy of the
+   * data. To make reviews/accounts genuinely shared across people, swap
+   * this shim out for calls to a real backend (Firebase, Supabase, etc).
+   */
+  (function () {
+    function nsKey(key, shared) {
+      return "gc:" + (shared ? "shared:" : "local:") + key;
+    }
+
+    window.storage = {
+      async get(key, shared) {
+        const raw = localStorage.getItem(nsKey(key, shared));
+        if (raw === null) {
+          throw new Error("Key not found: " + key);
+        }
+        return { key: key, value: raw, shared: !!shared };
+      },
+      async set(key, value, shared) {
+        try {
+          localStorage.setItem(nsKey(key, shared), value);
+          return { key: key, value: value, shared: !!shared };
+        } catch (e) {
+          return null;
+        }
+      },
+      async delete(key, shared) {
+        const fullKey = nsKey(key, shared);
+        const existed = localStorage.getItem(fullKey) !== null;
+        localStorage.removeItem(fullKey);
+        return { key: key, deleted: existed, shared: !!shared };
+      },
+      async list(prefix, shared) {
+        const fullPrefix = nsKey(prefix || "", shared);
+        const keys = [];
+        for (let i = 0; i < localStorage.length; i++) {
+          const k = localStorage.key(i);
+          if (k && k.indexOf(fullPrefix) === 0) {
+            keys.push(k.slice(nsKey("", shared).length));
+          }
+        }
+        return { keys: keys, prefix: prefix, shared: !!shared };
+      },
+    };
+  })();
+</script>
+
+<!-- Load the app's JSX and let Babel Standalone compile it in-browser -->
+<script type="text/babel" data-presets="react" src="app.tsx"></script>
+</body>
+</html>
